@@ -2,7 +2,7 @@ import logging
 
 import environ
 import newrelic.agent
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 from treeherder.etl.common import to_timestamp
 from treeherder.etl.push import store_push_data
@@ -24,6 +24,13 @@ class PushLoader:
             newrelic.agent.add_custom_attribute("branch", transformer.branch)
             repo = transformer.resolve_repo()
             newrelic.agent.add_custom_attribute("repository", repo.name)
+        except MultipleObjectsReturned:
+            logger.error(
+                "Multiple repositories matched url=%s branch=%s; skipping push",
+                transformer.repo_url,
+                transformer.branch,
+            )
+            return
         except ObjectDoesNotExist:
             repo_info = transformer.get_info()
             repo_info.update(
@@ -67,7 +74,10 @@ class GithubTransformer:
         return self.message_body["details"]["event.base.repo.branch"]
 
     def resolve_repo(self):
-        return self.repos.get(branch__regex=f"(^|,){self.branch}($|,)")
+        try:
+            return self.repos.get(branches__branch=self.branch)
+        except ObjectDoesNotExist:
+            return self.repos.get(accepts_all_branches=True)
 
     def get_info(self):
         # flatten the data a bit so it will show in new relic as fields
@@ -252,7 +262,7 @@ class HgPushTransformer:
         self.repos = Repository.objects.filter(url=self.repo_url, active_status="active")
 
     def resolve_repo(self):
-        return self.repos.get(branch=None)
+        self.repos.get(accepts_all_branches=False)
 
     def get_info(self):
         return self.message_body["payload"]

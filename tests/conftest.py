@@ -64,6 +64,8 @@ def setup_repository_data(django_db_setup, django_db_blocker):
         call_command("loaddata", join(SAMPLE_DATA_PATH, "repository_group.json"))
     with django_db_blocker.unblock():
         call_command("loaddata", join(SAMPLE_DATA_PATH, "repository.json"))
+    with django_db_blocker.unblock():
+        call_command("loaddata", join(SAMPLE_DATA_PATH, "repository_branch.json"))
 
 
 @pytest.fixture(scope="session", autouse=True)
