@@ -209,11 +209,8 @@ class GithubPullRequestTransformer(GithubTransformer):
     #     "version": 1
     # }
 
-    def get_branch(self):
-        """
-        Pull requests don't use the actual branch, just the string "pull request"
-        """
-        return "pull request"
+    def resolve_repo(self):
+        return self.repos.get(accepts_pull_requests=True)
 
     def get_repo(self):
         return self.message_body["details"]["event.base.repo.url"].replace(".git", "")

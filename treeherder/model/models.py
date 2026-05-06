@@ -109,6 +109,7 @@ class Repository(models.Model):
     is_try_repo = models.BooleanField(default=False)
     tc_root_url = models.CharField(max_length=255, null=False, db_index=True)
     accepts_all_branches = models.BooleanField(default=False, db_index=True)
+    accepts_pull_requests = models.BooleanField(default=False, db_index=True)
 
     class Meta:
         db_table = "repository"
